@@ -72,9 +72,11 @@ def chapter(book_id):
     page = request.args.get('page', 1, type=int)
     all_chapter = Chapter.query.filter_by(book_id=book_id).first()
     # print(type(pagination))
+    per_page=current_app.config['CHAPTER_PER_PAGE']
+
     if all_chapter:
         pagination = Chapter.query.filter_by(book_id=book_id).paginate(
-                page, per_page=current_app.config['CHAPTER_PER_PAGE'],
+                page=page, per_page=per_page,
                 error_out=False
         )
         chapters = pagination.items
@@ -96,7 +98,7 @@ def chapter(book_id):
 
     db.session.commit()
     pagination2 = Chapter.query.filter_by(book_id=book_id).paginate(
-        page, per_page=current_app.config['CHAPTER_PER_PAGE'],
+        page=page, per_page=per_page,
         error_out=False
     )
 

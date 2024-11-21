@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
-from flask_script import Manager
-from flask_migrate import Migrate, MigrateCommand
+# from flask_script import Manager
+# from flask_migrate import Migrate, MigrateCommand
 from dingdian import db
 from dingdian import create_app
 

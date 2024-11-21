@@ -14,10 +14,11 @@ def get_result(search):
 
 @api.route('/chapter/<int:book_id>')
 def get_chapter(book_id):
+    per_page=current_app.config['CHAPTER_PER_PAGE']
     # chapters = Chapter.query.filter_by(book_id=book_id).all()
     page = request.args.get('page', 1, type=int)
     pagination = Chapter.query.filter_by(book_id=book_id).paginate(
-        page, per_page=current_app.config['CHAPTER_PER_PAGE'],
+        page=page, per_page=per_page,
         error_out=False
     )
     chapters = pagination.items
