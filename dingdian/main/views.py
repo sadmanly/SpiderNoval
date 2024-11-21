@@ -1,10 +1,14 @@
 from flask import flash, render_template, url_for, redirect, request, current_app, jsonify
 from flask.blueprints import Blueprint
+from concurrent.futures import ThreadPoolExecutor
 
 from dingdian import db
 from .forms import SearchForm
 from ..spider.spider import DdSpider
 from ..models import Novel, Chapter, Article
+from sqlalchemy.orm import sessionmaker
+from datetime import datetime, timedelta
+
 
 
 main = Blueprint('main', __name__)
@@ -27,34 +31,41 @@ def internal_server_error(error):
 def index():
     form = SearchForm()
     if form.validate_on_submit():
-        search = form.search_name.data
+        search_type = form.search_type.data
+        search_name = form.search_name.data
+        author_name = form.author_name.data
+        if search_type == "author":
+            search_name = author_name
+        
         flash('搜索成功。')
-        return redirect(url_for('main.result', search=search))
+        return redirect(url_for('main.result', search=search_name,search_type = search_type))
     return render_template('index.html', form=form)
 
-@main.route('/results/<search>')
-def result(search):
+@main.route('/results/<search>/<search_type>')
+def result(search,search_type):
     page = request.args.get('page', 0, type=int)
+    books = []
     # 查找数据库中search键相等的结果，如果有则不需要调用爬虫，直接返回
-    books = Novel.query.filter_by(search_name=search, page=page).all()
+    if search_type == "author":
+        books = Novel.query.filter_by(author=search, page=page).all()
+    else:
+        books = Novel.query.filter_by(search_name=search, page=page).all()
     if books:
         return render_template('result.html', search=search, page=page, books=books)
-
     spider = DdSpider()
 
-    for data in spider.get_index_result(search, page):
-        novel = Novel(book_name=data['title'],
-                      book_url=data['url'],
-                      book_img=data['image'],
-                      author=data['author'],
-                      style=data['style'],
-                      profile=data['profile'],
-                      last_update=data['time'],
-                      page=page,
-                      search_name=search)
+    for data in spider.get_index_result(search,search_type, page):
+        novel = Novel(book_name=data['book_name'],
+                    book_url=data['book_url'],
+                    author=data['author'],
+                    book_type=data['book_type'],
+                    update_time=data['update_time'],
+                    page=page,
+                    search_name=search)
         db.session.add(novel)
     books = Novel.query.filter_by(search_name=search, page=page).all()
-    return render_template('result.html', search=search, page=page, books=books)
+
+    return render_template('result.html', search=search,search_type=search_type, page=page, books=books)
 
 @main.route('/chapter/<int:book_id>')
 def chapter(book_id):
@@ -72,15 +83,23 @@ def chapter(book_id):
 
     spider = DdSpider()
     book = Novel.query.filter_by(id=book_id).first()
-    for data in spider.get_chapter(book.book_url):
+    datas = spider.get_chapter(book.book_url)
+
+    for data in datas:
         chapter = Chapter(chapter=data['chapter'],
                            chapter_url=data['url'],
                            book_id=book_id)
-        db.session.add(chapter)
+        db.session.add(chapter)    
+        db.session.flush()
+        article2 = Article(content=data['content'],chapter_id=chapter.id)
+        db.session.add(article2)
+
+    db.session.commit()
     pagination2 = Chapter.query.filter_by(book_id=book_id).paginate(
         page, per_page=current_app.config['CHAPTER_PER_PAGE'],
         error_out=False
     )
+
     chapters = pagination2.items
 
     return render_template('chapter.html', book=book, chapters=chapters, pagination=pagination2)

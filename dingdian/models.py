@@ -1,33 +1,46 @@
 from flask import url_for
 
 from dingdian import db
-
+from .spider.spider import DdSpider
 
 class Novel(db.Model):
     __tablename__ = 'novels'
+
     id = db.Column(db.Integer, primary_key=True)
+    book_type = db.Column(db.String(64), nullable=True)
     book_name = db.Column(db.String(64), index=True)
     book_url = db.Column(db.String)
-    book_img = db.Column(db.String)
+    # book_img = db.Column(db.String)
+    latest_chapter = db.Column(db.String)
     author = db.Column(db.String(64))
-    style = db.Column(db.String(64), nullable=True)
-    last_update = db.Column(db.String(64), nullable=True)
-    profile = db.Column(db.Text, nullable=True)
-    search_name = db.Column(db.String)
+    update_time = db.Column(db.String(64), nullable=True)
+    search_name = db.Column(db.String(64))
     page = db.Column(db.Integer)
 
     chapters = db.relationship('Chapter', backref='book', lazy='dynamic')
 
+    def load_all(self):
+        for chapter in self.chapters:
+            print(f"{chapter}")
+            chapter_id = chapter.id
+            article = Article.query.filter_by(chapter_id=chapter_id).first()
+            if article:
+                continue
+            spider = DdSpider()
+            article2 = Article(content=spider.get_article(chapter.chapter_url),
+                            chapter_id=chapter_id)
+            db.session.add(article2) 
+
     def to_json(self):
         json_novel = {
-            'url': url_for('api.get_result', search=self.search_name,_external=True),
+            'book_url': url_for('api.get_result', search=self.search_name,_external=True),
             'book_name': self.book_name,
             'book_url': self.book_url,
-            'book_img': self.book_img,
+            # 'book_img': self.book_img,
             'author': self.author,
-            'style': self.style,
+            'book_type': self.book_type,
             'last_update': self.last_update,
-            'profile': self.profile,
+            # 'profile': self.profile,
         }
         return json_novel
 

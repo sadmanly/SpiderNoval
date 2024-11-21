@@ -1,23 +1,56 @@
 {% extends "base.html" %}
 
+
+
+
 {% block title %}
-MyNovels
+SanmanLy's Novel
 {% endblock %}
 
 {% block content %}
-<h3 align="center">搜索</h3><hr>
-<form action="" method="post" name="search">
-{{form.hidden_tag()}}
-{{form.search_name(class="form-control",placeholder="输入你要搜索的书名")}}
-{% for error in form.search_name.errors %}
-    <span style="color: red;">[{{error}}]</span>
-{% endfor %}<br>
-{{form.submit(value="搜索",class="btn btn-default")}}
-</form>
+<h3 align="center">搜索</h3>
+
 <hr>
-<div class="github-card" data-github="Blackyukun/dingdian" data-width="400" data-height="" data-theme="default"></div>
+    <form action="" method="post" name="search">
+    {{form.hidden_tag()}}
+
+    <label>选择搜索类型：</label>
+    {{ form.search_type }}
+    <br>
+
+    <!-- 搜索书名字段，默认显示 -->
+    <div id="name-search" style="display: block;">
+        {{ form.search_name(class="form-control", placeholder="输入你要搜索的书名") }}
+        {% for error in form.search_name.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </div>
+
+    <!-- 搜索作者名字段，默认隐藏 -->
+    <div id="author-search" style="display: none;">
+        {{ form.author_name(class="form-control", placeholder="输入作者名") }}
+        {% for error in form.author_name.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </div>
+
+    <br>
+    {{form.submit(value="搜索",class="btn btn-default")}}
+    </form>
+
+    <script>
+        // 根据选择的搜索类型动态显示对应的输入字段
+        document.querySelectorAll('input[name="search_type"]').forEach((elem) => {
+            elem.addEventListener("change", function() {
+                const searchType = document.querySelector('input[name="search_type"]:checked').value;
+                document.getElementById("name-search").style.display = searchType === "name" ? "block" : "none";
+                document.getElementById("author-search").style.display = searchType === "author" ? "block" : "none";
+            });
+        });
+    </script>
+
+<hr>
 {% block script %}
 {{ super() }}
-<script src="https://cdn.jsdelivr.net/github-cards/latest/widget.js"></script>
 {% endblock %}
 {% endblock %}

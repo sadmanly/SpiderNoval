@@ -22,14 +22,10 @@
         <table>
             <tr>
                 <td>
-                    <img class="img" src="{{i.book_img}}">
-                </td>
-                <td>
                     <a href="{{url_for('main.chapter',book_id=i.id)}}">{{i.book_name}}</a>
-                    <p><b>简介：</b>{{i.profile | safe}}</p>
-                    <p><b>作者：</b>{{i.author}}</p>
-                    <p><b>类型：</b>{{i.style}}</p>
-                    <p><b>更新时间：</b>{{i.last_update}}</p>
+                    <p><b>链接：</b><a href="{{ i.book_url }}" target="_blank">{{ i.book_url }}</a></p>                    <p><b>作者：</b>{{i.author}}</p>
+                    <p><b>类型：</b>{{i.book_type}}</p>
+                    <p><b>更新时间：</b>{{i.update_time}}</p>
                 </td>
             </tr>
         </table>
@@ -38,12 +34,12 @@
 {% endfor %}
 <ul class="pager">
     {% if page-1 != -1 %}
-	<li class="previous"><a href="{{url_for('main.result',search=search,page=page-1)}}">&larr; Older</a></li>
+	<li class="previous"><a href="{{url_for('main.result',search_type = search_type,search=search,page=page-1)}}">&larr; Older</a></li>
     {% else %}
     <li class="previous disable">&larr; Older</li>
     {% endif %}
     {% if page+1 !=10 %}
-	<li class="next"><a href="{{url_for('main.result',search=search,page=page+1)}}">Newer &rarr;</a></li>
+	<li class="next"><a href="{{url_for('main.result',search=search,search_type = search_type,page=page+1)}}">Newer &rarr;</a></li>
     {% else %}
     <li class="next disable">Newer &rarr;</li>
     {% endif %}
